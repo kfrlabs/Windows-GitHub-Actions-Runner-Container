@@ -10,14 +10,6 @@ function Stop-WithMessage {
     exit 1
 }
 
-if ([string]::IsNullOrWhiteSpace($env:GITHUB_URL)) {
-    Stop-WithMessage 'GITHUB_URL is required.'
-}
-
-if ([string]::IsNullOrWhiteSpace($env:RUNNER_TOKEN)) {
-    Stop-WithMessage 'RUNNER_TOKEN is required.'
-}
-
 $runnerHome = $env:RUNNER_HOME
 if ([string]::IsNullOrWhiteSpace($runnerHome)) {
     $runnerHome = 'C:\actions-runner'
@@ -44,25 +36,49 @@ if (-not (Test-Path -LiteralPath $configPath) -or -not (Test-Path -LiteralPath $
     Stop-WithMessage "The GitHub Actions Runner was not found in '$runnerHome'."
 }
 
+$runnerFile = Join-Path $runnerHome '.runner'
+$alreadyConfigured = Test-Path -LiteralPath $runnerFile
+$forceReconfigure = $env:RUNNER_FORCE_RECONFIGURE -eq '1' -or $env:RUNNER_FORCE_RECONFIGURE -eq 'true'
+$skipConfiguration = $alreadyConfigured -and -not $forceReconfigure
+
+if ($skipConfiguration) {
+    Write-Host "Runner already configured in '$runnerHome'; skipping configuration."
+    if (-not [string]::IsNullOrWhiteSpace($env:RUNNER_TOKEN)) {
+        Write-Host 'RUNNER_TOKEN is set but ignored because the runner is already configured. Set RUNNER_FORCE_RECONFIGURE=1 with a fresh token to reconfigure.'
+    }
+}
+else {
+    if ([string]::IsNullOrWhiteSpace($env:GITHUB_URL)) {
+        Stop-WithMessage 'GITHUB_URL is required.'
+    }
+
+    if ([string]::IsNullOrWhiteSpace($env:RUNNER_TOKEN)) {
+        Stop-WithMessage 'RUNNER_TOKEN is required.'
+    }
+}
+
 Push-Location $runnerHome
 $configured = $false
 $runnerExitCode = 1
 
 try {
-    $configArguments = @(
-        '--unattended',
-        '--url', $env:GITHUB_URL,
-        '--token', $env:RUNNER_TOKEN,
-        '--name', $runnerName,
-        '--labels', $runnerLabels,
-        '--work', $runnerWorkdir
-    )
+    if (-not $skipConfiguration) {
+        $configArguments = @(
+            '--unattended',
+            '--url', $env:GITHUB_URL,
+            '--token', $env:RUNNER_TOKEN,
+            '--name', $runnerName,
+            '--labels', $runnerLabels,
+            '--work', $runnerWorkdir,
+            '--replace'
+        )
 
-    & $configPath @configArguments
-    if ($LASTEXITCODE -ne 0) {
-        throw "Runner configuration failed with exit code $LASTEXITCODE."
+        & $configPath @configArguments
+        if ($LASTEXITCODE -ne 0) {
+            throw "Runner configuration failed with exit code $LASTEXITCODE."
+        }
+        $configured = $true
     }
-    $configured = $true
 
     & $runPath
     $runnerExitCode = $LASTEXITCODE

@@ -7,9 +7,10 @@ services:
         RUNNER_VERSION: ${RUNNER_VERSION:-2.328.0}
         GIT_VERSION: ${GIT_VERSION:-2.50.1}
     environment:
-      GITHUB_URL: ${GITHUB_URL:?Set GITHUB_URL in the environment or .env file}
-      RUNNER_TOKEN: ${RUNNER_TOKEN:?Set RUNNER_TOKEN in the environment or .env file}
+      GITHUB_URL: ${GITHUB_URL:-}
+      RUNNER_TOKEN: ${RUNNER_TOKEN:-}
       RUNNER_REMOVE_TOKEN: ${RUNNER_REMOVE_TOKEN:-}
       RUNNER_NAME: ${RUNNER_NAME:-}
       RUNNER_LABELS: ${RUNNER_LABELS:-windows,windows-2025}
       RUNNER_WORKDIR: ${RUNNER_WORKDIR:-_work}
+      RUNNER_FORCE_RECONFIGURE: ${RUNNER_FORCE_RECONFIGURE:-}

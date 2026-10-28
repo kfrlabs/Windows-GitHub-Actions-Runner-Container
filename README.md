@@ -42,6 +42,26 @@ docker run --rm `
 | `RUNNER_LABELS` | Comma-separated custom labels | `windows,windows-2025` |
 | `RUNNER_WORKDIR` | Runner working directory | `_work` |
 | `RUNNER_REMOVE_TOKEN` | Temporary runner removal token | None |
+| `RUNNER_FORCE_RECONFIGURE` | Set to `1` or `true` with a fresh `RUNNER_TOKEN` to overwrite an existing configuration | None (skip `config.cmd` if already configured) |
+
+## Restart behavior
+
+If `C:\actions-runner\.runner` already exists, the entrypoint skips `config.cmd` and starts `run.cmd` directly. `GITHUB_URL` and `RUNNER_TOKEN` are only required for the first configuration. This makes `docker restart` and `unless-stopped` safe: registration tokens expire quickly and cannot be reused on every restart.
+
+Configuration uses `--replace`, so a fresh container with the same `RUNNER_NAME` can take over a stale GitHub entry when given a valid token.
+
+To reconfigure an existing container with a new token, URL, name, labels, or work directory, restart it once with `RUNNER_FORCE_RECONFIGURE=1` and a fresh `RUNNER_TOKEN`. Otherwise recreate it from scratch, which always configures cleanly:
+
+```powershell
+docker stop github-runner
+docker rm github-runner
+docker run -d --name github-runner --restart unless-stopped `
+  -e GITHUB_URL="https://github.com/my-org/my-repository" `
+  -e RUNNER_TOKEN="<nouveau-token>" `
+  windows-github-runner
+```
+
+If the container keeps exiting with `Cannot configure the runner because it is already configured`, it was created by the old entrypoint; rebuild the image and recreate the container with a fresh token.
 
 ## Docker Compose and multiple runners
 
