@@ -110,4 +110,4 @@ jobs:
 
 ## CI
 
-`.github/workflows/build.yml` builds the image on a GitHub-hosted `windows-2025` runner. It does not publish an image to a registry. Building the Windows image requires a host and Docker engine compatible with Windows containers.
+Pull requests run lightweight validation on Ubuntu (`PSScriptAnalyzer` on `entrypoint.ps1`, `docker compose config`, and a check that the pinned runner/Git release URLs exist). The Windows image is built on `windows-2025` only when merging to `main` (or manually via workflow dispatch). It does not publish an image to a registry. Building the Windows image requires a host and Docker engine compatible with Windows containers.

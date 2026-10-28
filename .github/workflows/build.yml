@@ -7,8 +7,41 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Lint entrypoint with PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          Install-Module -Name PSScriptAnalyzer -Scope CurrentUser -Force
+          # Write-Host is intentional container logging; Stop-WithMessage exits
+          # the process, so ShouldProcess support does not apply.
+          $excludedRules = @('PSAvoidUsingWriteHost', 'PSUseShouldProcessForStateChangingFunctions')
+          Invoke-ScriptAnalyzer -Path ./entrypoint.ps1 -EnableExit -Severity Error,Warning -ExcludeRule $excludedRules
+
+      - name: Validate compose config
+        run: docker compose config > /dev/null
+
+      - name: Check pinned release URLs exist
+        shell: bash
+        run: |
+          set -euo pipefail
+          runner_version="$(grep -oP '^ARG RUNNER_VERSION=\K.*' Dockerfile)"
+          git_version="$(grep -oP '^ARG GIT_VERSION=\K.*' Dockerfile)"
+          curl -fsSL -o /dev/null "https://github.com/actions/runner/releases/download/v${runner_version}/actions-runner-win-x64-${runner_version}.zip"
+          curl -fsSL -o /dev/null "https://github.com/git-for-windows/git/releases/download/v${git_version}.windows.1/Git-${git_version}-64-bit.exe"
+          echo "Runner ${runner_version} and Git ${git_version} releases OK."
+
   build:
+    if: github.event_name != 'pull_request'
     runs-on: windows-2025
     steps:
       - name: Check out repository
