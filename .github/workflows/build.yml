@@ -22,7 +22,7 @@ jobs:
         shell: pwsh
         run: |
           Install-Module -Name PSScriptAnalyzer -Scope CurrentUser -Force
-          Invoke-ScriptAnalyzer -Path ./entrypoint.ps1 -EnableExit -Severity Error,Warning -ExcludeRules PSAvoidUsingWriteHost
+          Invoke-ScriptAnalyzer -Path ./entrypoint.ps1 -EnableExit -Severity Error,Warning -ExcludeRule PSAvoidUsingWriteHost
 
       - name: Validate compose config
         run: docker compose config > /dev/null
