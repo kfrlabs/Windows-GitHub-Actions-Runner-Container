@@ -22,7 +22,10 @@ jobs:
         shell: pwsh
         run: |
           Install-Module -Name PSScriptAnalyzer -Scope CurrentUser -Force
-          Invoke-ScriptAnalyzer -Path ./entrypoint.ps1 -EnableExit -Severity Error,Warning -ExcludeRule PSAvoidUsingWriteHost
+          # Write-Host is intentional container logging; Stop-WithMessage exits
+          # the process, so ShouldProcess support does not apply.
+          $excludedRules = @('PSAvoidUsingWriteHost', 'PSUseShouldProcessForStateChangingFunctions')
+          Invoke-ScriptAnalyzer -Path ./entrypoint.ps1 -EnableExit -Severity Error,Warning -ExcludeRule $excludedRules
 
       - name: Validate compose config
         run: docker compose config > /dev/null
