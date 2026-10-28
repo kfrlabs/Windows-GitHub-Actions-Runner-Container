@@ -4,7 +4,7 @@ services:
     build:
       context: .
       args:
-        RUNNER_VERSION: ${RUNNER_VERSION:-2.328.0}
+        RUNNER_VERSION: ${RUNNER_VERSION:-2.338.2}
         GIT_VERSION: ${GIT_VERSION:-2.50.1}
     environment:
       GITHUB_URL: ${GITHUB_URL:-}

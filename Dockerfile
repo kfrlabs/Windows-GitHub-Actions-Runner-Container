@@ -3,7 +3,7 @@ FROM mcr.microsoft.com/windows/servercore:ltsc2025
 
 SHELL ["C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
-ARG RUNNER_VERSION=2.328.0
+ARG RUNNER_VERSION=2.338.2
 ARG GIT_VERSION=2.50.1
 
 ENV RUNNER_HOME=C:\actions-runner
